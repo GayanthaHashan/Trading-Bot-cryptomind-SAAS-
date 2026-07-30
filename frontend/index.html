@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoMind AI - Full System</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#e5e5e5;font-family:Inter,system-ui,sans-serif}
+.header{padding:14px 20px;border-bottom:1px solid #1f1f1f;display:flex;justify-content:space-between;align-items:center;background:#0f0f0f;position:sticky;top:0;z-index:10}
+.logo{font-weight:900;font-size:18px}.logo span{color:#facc15}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid #166534;background:#14532d;color:#4ade80}
+.container{max-width:1300px;margin:0 auto;padding:20px}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+.card{background:#141414;border:1px solid #262626;border-radius:16px;padding:18px}
+.card h3{font-size:12px;letter-spacing:1px;color:#a3a3a3;margin-bottom:12px;text-transform:uppercase}
+.sym-btn,.int-btn{padding:7px 14px;border-radius:10px;border:1px solid #2a2a2a;background:#1a1a1a;color:#a3a3a3;cursor:pointer;font-weight:600;font-size:12px;margin:2px}
+.sym-btn.active,.int-btn.active{background:#facc15;color:#000;border-color:#facc15}
+.price{font-size:42px;font-weight:800;letter-spacing:-1.5px}
+.rsi-bar{height:8px;background:#1f1f1f;border-radius:4px;margin:12px 0;position:relative;overflow:hidden}
+.rsi-fill{height:100%;border-radius:4px;transition:width 0.5s}
+.decision{border-radius:12px;padding:16px;text-align:center;margin-top:16px}
+.decision.BUY{background:linear-gradient(135deg,#14532d,#166534);border:1px solid #22c55e}
+.decision.SELL{background:linear-gradient(135deg,#7f1d1d,#991b1b);border:1px solid #ef4444}
+.decision.HOLD{background:linear-gradient(135deg,#27272a,#3f3f46);border:1px solid #52525b}
+.decision .action{font-size:32px;font-weight:900}
+.btn-analyze{width:100%;padding:14px;background:#facc15;color:#000;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;margin-top:16px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.metric{background:#0f0f0f;border:1px solid #1f1f1f;border-radius:8px;padding:10px}
+.metric .label{font-size:10px;color:#737373;text-transform:uppercase}
+.metric .value{font-size:16px;font-weight:700;margin-top:2px}
+.chat-msg{padding:8px 12px;border-radius:10px;margin-bottom:8px;font-size:13px;line-height:1.4}
+.chat-user{background:#facc15;color:#000;text-align:right;margin-left:30px}
+.chat-ai{background:#1a1a1a;border:1px solid #2a2a2a}
+.quick{padding:5px 10px;border-radius:20px;border:1px solid #2a2a2a;background:#111;color:#a3a3a3;font-size:11px;cursor:pointer;margin:2px}
+</style>
+</head>
+<body>
+<div class="header">
+<div><div class="logo">CryptoMind <span>AI</span> <small style="font-size:10px;color:#52525b">FULL SYSTEM</small></div><div style="font-size:10px;color:#52525b" id="backendDisplay">Backend: Local AI (no server) • Click ⚙️ to connect Render</div></div>
+<div style="display:flex;gap:8px;align-items:center"><div class="badge"><span style="width:6px;height:6px;background:#22c55e;display:inline-block;border-radius:50%;margin-right:4px"></span>ONLINE</div><button id="gearBtn" style="padding:6px 10px;border-radius:8px;border:1px solid #2a2a2a;background:#1a1a1a;color:#fff;cursor:pointer">⚙️</button></div>
+</div>
+<div class="container">
+<div class="grid">
+<div>
+<div class="card">
+<h3>Asset & Timeframe</h3>
+<div id="symbolRow"><button class="sym-btn active" data-sym="BTCUSDT">BTC/USDT</button><button class="sym-btn" data-sym="ETHUSDT">ETH/USDT</button><button class="sym-btn" data-sym="SOLUSDT">SOL/USDT</button><button class="sym-btn" data-sym="BNBUSDT">BNB/USDT</button></div>
+<div style="margin-top:10px" id="intervalRow"><button class="int-btn active" data-int="1h">1H</button><button class="int-btn" data-int="4h">4H</button><button class="int-btn" data-int="1d">1D</button></div>
+<div style="margin-top:18px;display:flex;justify-content:space-between;align-items:end">
+<div><div style="font-size:11px;color:#737373">Price</div><div class="price" id="priceEl">$--</div></div>
+<div style="text-align:right"><div style="font-size:11px;color:#737373">RSI</div><div style="font-size:26px;font-weight:800" id="rsiEl">--</div></div>
+</div>
+<div class="rsi-bar"><div class="rsi-fill" id="rsiFill" style="width:50%;background:#52525b"></div></div>
+<div class="decision HOLD" id="decisionBox"><div class="action" id="actionEl">ANALYZE</div><div style="font-size:12px;margin-top:4px" id="confEl">Click Analyze</div></div>
+<button class="btn-analyze" id="analyzeBtn">⚡ Analyze • Live Data</button>
+<div class="metrics"><div class="metric"><div class="label">EMA 20</div><div class="value" id="ema20El">--</div></div><div class="metric"><div class="label">EMA 50</div><div class="value" id="ema50El">--</div></div><div class="metric"><div class="label">Volume</div><div class="value" id="volEl">--</div></div><div class="metric"><div class="label">Mode</div><div class="value" style="color:#facc15" id="modeEl">Local AI</div></div></div>
+<div style="margin-top:12px;padding:10px;background:#0f0f0f;border-radius:8px;border:1px solid #1f1f1f;font-size:11px;color:#737373" id="reasoningEl">Select symbol and Analyze. Works with or without backend.</div>
+</div>
+</div>
+<div>
+<div class="card">
+<h3>🤖 AI Assistant • Connected to your backend</h3>
+<div id="chatBox" style="height:340px;overflow-y:auto;background:#0a0a0a;border-radius:10px;padding:10px;border:1px solid #1f1f1f;margin-bottom:10px">
+<div class="chat-msg chat-ai"><b style="color:#facc15">AI:</b> Hi! I'm your CryptoMind assistant. I see <span id="chatSym">BTCUSDT</span> - <span id="chatAct">ANALYZE</span>. Ask me anything about this trade!</div>
+</div>
+<div style="margin-bottom:8px"><button class="quick" onclick="askAI('Should I buy?')">Should I buy?</button><button class="quick" onclick="askAI('Explain RSI')">Explain RSI</button><button class="quick" onclick="askAI('Why this signal?')">Why?</button><button class="quick" onclick="askAI('Risk?')">Risk?</button></div>
+<div style="display:flex;gap:6px"><input id="chatInput" placeholder="Ask AI..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #2a2a2a;background:#0f0f0f;color:#fff;font-size:13px" onkeypress="if(event.key==='Enter')sendChat()"><button onclick="sendChat()" style="padding:10px 14px;background:#facc15;color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer">Send</button></div>
+</div>
+<div class="card" style="margin-top:12px">
+<h3>📦 Deployment Status</h3>
+<div style="font-size:12px;line-height:1.6;color:#a3a3a3" id="deployStatus">
+Backend: <span id="statusBackend">Checking...</span><br>
+Frontend: <span style="color:#22c55e">Online (this file)</span><br>
+AI Assistant: <span id="statusAI">Local fallback ready</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+let curSym='BTCUSDT', curInt='1h', lastCtx={symbol:'BTCUSDT',rsi:50,action:'HOLD',reasoning:''};
+document.querySelectorAll('.sym-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.sym-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');curSym=b.dataset.sym;analyze();});
+document.querySelectorAll('.int-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.int-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');curInt=b.dataset.int;analyze();});
+
+function calcRSI(p,per=14){if(p.length<per+1)return 50;let g=0,l=0;for(let i=1;i<=per;i++){let d=p[i]-p[i-1];if(d>=0)g+=d;else l-=d;}let ag=g/per,al=l/per;for(let i=per+1;i<p.length;i++){let d=p[i]-p[i-1];let gain=d>0?d:0,loss=d<0?-d:0;ag=(ag*(per-1)+gain)/per;al=(al*(per-1)+loss)/per;}if(al===0)return 100;let rs=ag/al;return 100-(100/(1+rs));}
+function calcEMA(p,per){let k=2/(per+1);let e=p.slice(0,per).reduce((a,b)=>a+b,0)/per;for(let i=per;i<p.length;i++)e=p[i]*k+e*(1-k);return e;}
+
+async function analyze(){
+  const btn=document.getElementById('analyzeBtn'); btn.disabled=true; btn.textContent='⏳ Analyzing...';
+  let backend=localStorage.getItem('cryptomind_backend')||'';
+  let price, rsi, ema20, ema50, vol, action, conf, reasoning;
+  try{
+    if(backend){
+      let res=await fetch(backend.replace(/\/$/,'')+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({symbol:curSym,interval:curInt})});
+      if(res.ok){
+        let d=await res.json();
+        price=d.technical.close; rsi=d.technical.rsi; ema20=d.technical.ema20; ema50=d.technical.ema50; vol=1000; action=d.decision.action; conf=d.decision.confidence; reasoning=d.decision.reasoning;
+        document.getElementById('modeEl').textContent='Render Backend';
+        document.getElementById('statusBackend').innerHTML='<span style="color:#22c55e">Connected: '+backend+'</span>';
+        document.getElementById('statusAI').innerHTML='<span style="color:#22c55e">Backend /chat online</span>';
+      } else throw new Error('backend failed');
+    } else throw new Error('no backend');
+  }catch(e){
+    // Fallback local + Binance direct
+    try{
+      let url=`https://api.binance.com/api/v3/klines?symbol=${curSym}&interval=${curInt}&limit=100`;
+      let res=await fetch(url);
+      if(!res.ok){ url=`https://data-api.binance.vision/api/v3/klines?symbol=${curSym}&interval=${curInt}&limit=100`; res=await fetch(url); }
+      let data=await res.json();
+      let closes=data.map(d=>parseFloat(d[4])); let vols=data.map(d=>parseFloat(d[5]));
+      price=closes[closes.length-1]; let prev=closes[closes.length-2]; vol=vols[vols.length-1];
+      rsi=calcRSI(closes); ema20=calcEMA(closes,20); ema50=calcEMA(closes,50);
+      if(rsi<30 && price>ema20){action='BUY';conf=0.85;reasoning=`Oversold RSI ${rsi.toFixed(1)} + price above EMA20. Strong reversal.`;}
+      else if(rsi>70){action='SELL';conf=0.8;reasoning=`Overbought RSI ${rsi.toFixed(1)}. Take profit.`;}
+      else if(rsi<40 && ema20>ema50){action='BUY';conf=0.7;reasoning=`RSI ${rsi.toFixed(1)} recovering, EMA bullish.`;}
+      else{action='HOLD';conf=0.55;reasoning=`RSI ${rsi.toFixed(1)} neutral. Wait for confirmation.`;}
+      document.getElementById('modeEl').textContent='Local AI';
+      document.getElementById('statusBackend').innerHTML='<span style="color:#facc15">Local fallback (no backend configured)</span>';
+      document.getElementById('statusAI').innerHTML='<span style="color:#facc15">Local AI fallback</span>';
+    }catch(err){
+      price=62000+Math.random()*1000; rsi=30+Math.random()*40; ema20=price-100; ema50=price-200; action='HOLD'; conf=0.5; reasoning='Demo mode - Binance blocked, using mock';
+    }
+  }
+  document.getElementById('priceEl').textContent='$'+price.toLocaleString(undefined,{maximumFractionDigits:2});
+  document.getElementById('rsiEl').textContent=rsi.toFixed(1);
+  document.getElementById('ema20El').textContent='$'+ema20.toFixed(0);
+  document.getElementById('ema50El').textContent='$'+ema50.toFixed(0);
+  document.getElementById('volEl').textContent=(vol/1000).toFixed(1)+'K';
+  let fill=document.getElementById('rsiFill'); fill.style.width=rsi+'%'; fill.style.background=rsi<30?'#22c55e':rsi>70?'#ef4444':'#facc15';
+  let box=document.getElementById('decisionBox'); box.className='decision '+action;
+  document.getElementById('actionEl').textContent=action;
+  document.getElementById('confEl').textContent=`Confidence ${Math.round(conf*100)}% • ${curSym} • ${curInt}`;
+  document.getElementById('reasoningEl').textContent=reasoning;
+  lastCtx={symbol:curSym,rsi:rsi,action:action,reasoning:reasoning};
+  document.getElementById('chatSym').textContent=curSym; document.getElementById('chatAct').textContent=action;
+  btn.disabled=false; btn.textContent=`✅ ${action} ${curSym} • RSI ${rsi.toFixed(0)}`;
+}
+
+async function sendChat(){
+  let inp=document.getElementById('chatInput'); let msg=inp.value.trim(); if(!msg)return;
+  let box=document.getElementById('chatBox');
+  box.innerHTML+=`<div class="chat-msg chat-user"><b>You:</b> ${msg}</div>`; inp.value=''; box.scrollTop=box.scrollHeight;
+  let backend=localStorage.getItem('cryptomind_backend')||'';
+  let reply='';
+  if(backend){
+    try{let r=await fetch(backend.replace(/\/$/,'')+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg,symbol:lastCtx.symbol,context:lastCtx})}); if(r.ok){let d=await r.json(); reply=d.reply;}}catch(e){}
+  }
+  if(!reply){
+    let m=msg.toLowerCase();
+    if(m.includes('buy')) reply=`For ${lastCtx.symbol}, ${lastCtx.action} RSI ${lastCtx.rsi.toFixed(1)}. ${lastCtx.reasoning} Risk 1-2%.`;
+    else if(m.includes('rsi')) reply=`RSI ${lastCtx.rsi.toFixed(1)}: <30 oversold buy, >70 overbought sell. Now ${lastCtx.rsi<30?'oversold buy':lastCtx.rsi>70?'overbought sell':'neutral'}.`;
+    else if(m.includes('sell')) reply=`SELL when RSI>70 or price < EMA20. Current ${lastCtx.action}. Stop-loss -3%.`;
+    else if(m.includes('why')) reply=`Why ${lastCtx.action}? ${lastCtx.reasoning}`;
+    else reply=`I'm AI for ${lastCtx.symbol}. Signal ${lastCtx.action} RSI ${lastCtx.rsi.toFixed(1)}. Ask: Should I buy? Explain RSI?`;
+  }
+  box.innerHTML+=`<div class="chat-msg chat-ai"><b style="color:#facc15">AI:</b> ${reply}</div>`; box.scrollTop=box.scrollHeight;
+}
+function askAI(q){document.getElementById('chatInput').value=q; sendChat();}
+document.getElementById('analyzeBtn').onclick=analyze;
+document.getElementById('gearBtn').onclick=()=>{
+  let url=prompt('Enter Render backend URL (e.g., https://cryptomind-backend.onrender.com)\nLeave empty for Local AI:', localStorage.getItem('cryptomind_backend')||'');
+  if(url!==null){ if(url.trim()===''){localStorage.removeItem('cryptomind_backend');document.getElementById('backendDisplay').textContent='Backend: Local AI (no server)';} else{localStorage.setItem('cryptomind_backend',url.trim());document.getElementById('backendDisplay').textContent='Backend: '+url.trim();} analyze(); }
+};
+analyze();
+</script>
+</body>
+</html>
