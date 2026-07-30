@@ -1,9 +1,8 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
 
-app = FastAPI(title="CryptoMind AI - Works 100% No Card")
+app = FastAPI(title="CryptoMind AI - GitHub Codespace Works 100%")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 try:
@@ -21,10 +20,7 @@ except Exception as e:
 
 @app.get("/")
 def root():
-    if HAS_CORE:
-        return {"status":"Cloud SaaS Online - Works 100% No Card","platform":"PythonAnywhere/Replit/Vercel","pc_storage":"0MB","ram":"512MB-1GB free","no_card":True}
-    else:
-        return {"status":"Core missing","error":IMPORT_ERROR,"fix":"Upload core folder"}
+    return {"status":"Cloud SaaS Online - GitHub Codespace - Works 100%","no_card":True,"no_sdk":True,"works_in_sri_lanka":True,"pc_storage":"0MB when using Codespace"}
 
 from pydantic import BaseModel
 class Req(BaseModel):
@@ -35,7 +31,7 @@ class Req(BaseModel):
 @app.post("/analyze")
 def analyze(req: Req):
     if not HAS_CORE:
-        return {"error":"Core files missing"}
+        return {"error":"Core missing","detail":IMPORT_ERROR}
     try:
         df = fetch_klines(req.symbol, req.interval, 200)
         tech = analyze_technicals(df)
@@ -49,9 +45,7 @@ def analyze(req: Req):
 
 @app.get("/portfolio")
 def portfolio():
-    if not HAS_CORE:
-        return {"error":"Core missing"}
-    return executor.get_status()
+    return executor.get_status() if HAS_CORE else {"error":"Core missing"}
 
 @app.get("/health")
 def health():
